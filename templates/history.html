@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3>Lịch sử giao dịch</h3>
+<table class="table table-striped">
+  <thead><tr><th>Thời gian</th><th>Mã SP</th><th>Tên SP</th><th>Loại</th><th>SL</th></tr></thead>
+  <tbody>
+    {% for log in logs %}
+      <tr>
+        <td>{{ log.time.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+        <td>{{ log.product.code }}</td>
+        <td>{{ log.product.name }}</td>
+        <td>{{ "Nhập" if log.type == "import" else "Xuất" }}</td>
+        <td>{{ log.qty }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+

@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3>Danh sách sản phẩm</h3>
+
+<form class="d-flex mb-3" method="get">
+  <input type="text" name="q" value="{{ q }}" class="form-control me-2" placeholder="Tìm kiếm mã SP hoặc tên">
+  <button class="btn btn-outline-secondary">Tìm</button>
+</form>
+
+<form class="row g-2 mb-4" method="POST" action="{{ url_for('add') }}">
+  <div class="col-md-3"><input name="code" required class="form-control" placeholder="Mã SP" /></div>
+  <div class="col-md-5"><input name="name" required class="form-control" placeholder="Tên sản phẩm" /></div>
+  <div class="col-md-2"><button class="btn btn-success w-100">➕ Thêm</button></div>
+</form>
+
+<table class="table table-bordered">
+  <thead><tr><th>Mã SP</th><th>Tên SP</th><th>Số lượng</th><th>Thao tác</th></tr></thead>
+  <tbody>
+  {% for p in products %}
+    <tr>
+      <form method="POST" action="{{ url_for('edit', id=p.id) }}">
+        <td><input name="code" value="{{ p.code }}" class="form-control" /></td>
+        <td><input name="name" value="{{ p.name }}" class="form-control" /></td>
+        <td>{{ p.quantity }}</td>
+        <td>
+          <button class="btn btn-sm btn-outline-primary">💾</button>
+          <a href="{{ url_for('delete', id=p.id) }}" class="btn btn-sm btn-outline-danger">🗑️</a>
+        </td>
+      </form>
+    </tr>
+    <tr>
+      <form method="POST" action="{{ url_for('imp', id=p.id) }}">
+        <td colspan="2"><input name="qty" type="number" min="1" class="form-control" placeholder="Số lượng nhập" /></td>
+        <td colspan="2"><button class="btn btn-sm btn-outline-success w-100">📥 Nhập kho</button></td>
+      </form>
+    </tr>
+    <tr>
+      <form method="POST" action="{{ url_for('exp', id=p.id) }}">
+        <td colspan="2"><input name="qty" type="number" min="1" class="form-control" placeholder="Số lượng xuất" /></td>
+        <td colspan="2"><button class="btn btn-sm btn-outline-warning w-100">📤 Xuất kho</button></td>
+      </form>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
