@@ -20,12 +20,12 @@ login_manager.login_view = 'auth.login'
 def load_user(uid):
     return User.query.get(int(uid))
 
-@app.before_first_request
-def setup():
+with app.app_context():
     db.create_all()
     if not User.query.filter_by(username='admin').first():
         db.session.add(User(username='admin', password_hash=generate_password_hash('123456')))
         db.session.commit()
+
 
 @app.route('/')
 @login_required
