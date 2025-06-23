@@ -4,7 +4,7 @@ from werkzeug.security import generate_password_hash
 from models import db, User, Product, Transaction
 from auth import auth_bp
 from datetime import datetime, timedelta
-from sqlalchemy import inspect
+from sqlalchemy import inspect, text
 import os
 
 app = Flask(__name__)
@@ -22,25 +22,24 @@ login_manager.login_view = 'auth.login'
 def load_user(uid):
     return User.query.get(int(uid))
 
-with app.app_context():
-    db.create_all()
+@app.before_first_request
+def ensure_location_column():
+    with app.app_context():
+        inspector = inspect(db.engine)
+        cols = [col["name"] for col in inspector.get_columns("product")]
+        if "location" not in cols:
+            try:
+                db.session.execute(text('ALTER TABLE product ADD COLUMN location VARCHAR(120);'))
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
 
-    # ✅ Kiểm tra nếu chưa có cột location thì tự thêm
-    inspector = inspect(db.engine)
-    columns = [col["name"] for col in inspector.get_columns("product")]
-    if "location" not in columns:
-        try:
-            db.session.execute('ALTER TABLE product ADD COLUMN location VARCHAR(120);')
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
-
-    # ✅ Tạo user mặc định
-    if not User.query.filter_by(username='admin').first():
-        db.session.add(User(username='admin', password_hash=generate_password_hash('123456'), role='admin'))
-    if not User.query.filter_by(username='staff').first():
-        db.session.add(User(username='staff', password_hash=generate_password_hash('123456'), role='staff'))
-    db.session.commit()
+        # tạo user mặc định nếu chưa có
+        if not User.query.filter_by(username='admin').first():
+            db.session.add(User(username='admin', password_hash=generate_password_hash('123456'), role='admin'))
+        if not User.query.filter_by(username='staff').first():
+            db.session.add(User(username='staff', password_hash=generate_password_hash('123456'), role='staff'))
+        db.session.commit()
 
 @app.route('/')
 @login_required
