@@ -1,47 +1,92 @@
-{% extends 'base.html' %}
-{% block content %}
-<h3>Danh sách sản phẩm</h3>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Quản lý kho</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <style>
+    body { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 220px;
+      background-color: #004080;
+      color: white;
+      padding: 20px;
+    }
+    .sidebar a { color: white; text-decoration: none; display: block; margin-bottom: 10px; }
+    .sidebar a:hover { text-decoration: underline; }
+    .main { flex: 1; padding: 20px; }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h4>📦 THEGIOILOCNUOC</h4>
+    <a href="{{ url_for('index') }}">🏠 Trang chủ</a>
+    <a href="{{ url_for('history_import') }}">📥 Lịch sử nhập</a>
+    <a href="{{ url_for('history_export') }}">📤 Lịch sử xuất</a>
+    <a href="{{ url_for('history') }}">🧾 Tất cả lịch sử</a>
+    <a href="{{ url_for('auth.logout') }}">🚪 Đăng xuất</a>
+  </div>
 
-<form class="d-flex mb-3" method="get">
-  <input type="text" name="q" value="{{ q }}" class="form-control me-2" placeholder="Tìm kiếm mã SP hoặc tên">
-  <button class="btn btn-outline-secondary">Tìm</button>
-</form>
+  <div class="main">
+    <h2>Quản lý sản phẩm</h2>
 
-<form class="row g-2 mb-4" method="POST" action="{{ url_for('add') }}">
-  <div class="col-md-3"><input name="code" required class="form-control" placeholder="Mã SP" /></div>
-  <div class="col-md-5"><input name="name" required class="form-control" placeholder="Tên sản phẩm" /></div>
-  <div class="col-md-2"><button class="btn btn-success w-100">➕ Thêm</button></div>
-</form>
+    <form method="POST" action="{{ url_for('add') }}" class="row g-2 mb-4">
+      <div class="col-md-2">
+        <input name="code" class="form-control" placeholder="Mã SP" required>
+      </div>
+      <div class="col-md-3">
+        <input name="name" class="form-control" placeholder="Tên SP" required>
+      </div>
+      <div class="col-md-3">
+        <input name="location" class="form-control" placeholder="Vị trí" required>
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-primary w-100">Thêm</button>
+      </div>
+    </form>
 
-<table class="table table-bordered">
-  <thead><tr><th>Mã SP</th><th>Tên SP</th><th>Số lượng</th><th>Thao tác</th></tr></thead>
-  <tbody>
-  {% for p in products %}
-    <tr>
-      <form method="POST" action="{{ url_for('edit', id=p.id) }}">
-        <td><input name="code" value="{{ p.code }}" class="form-control" /></td>
-        <td><input name="name" value="{{ p.name }}" class="form-control" /></td>
-        <td>{{ p.quantity }}</td>
-        <td>
-          <button class="btn btn-sm btn-outline-primary">💾</button>
-          <a href="{{ url_for('delete', id=p.id) }}" class="btn btn-sm btn-outline-danger">🗑️</a>
-        </td>
-      </form>
-    </tr>
-    <tr>
-      <form method="POST" action="{{ url_for('imp', id=p.id) }}">
-        <td colspan="2"><input name="qty" type="number" min="1" class="form-control" placeholder="Số lượng nhập" /></td>
-        <td colspan="2"><button class="btn btn-sm btn-outline-success w-100">📥 Nhập kho</button></td>
-      </form>
-    </tr>
-    <tr>
-      <form method="POST" action="{{ url_for('exp', id=p.id) }}">
-        <td colspan="2"><input name="qty" type="number" min="1" class="form-control" placeholder="Số lượng xuất" /></td>
-        <td colspan="2"><button class="btn btn-sm btn-outline-warning w-100">📤 Xuất kho</button></td>
-      </form>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
-{% endblock %}
+    <form method="GET" class="mb-3">
+      <input type="text" name="q" class="form-control" placeholder="Tìm mã SP, tên, vị trí..." value="{{ q }}">
+    </form>
+
+    <table class="table table-bordered table-striped align-middle">
+      <thead class="table-primary">
+        <tr>
+          <th>Mã SP</th>
+          <th>Tên</th>
+          <th>SL</th>
+          <th>Vị trí</th>
+          <th>Hành động</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in products %}
+        <tr>
+          <form method="POST" action="{{ url_for('edit', id=p.id) }}">
+            <td><input name="code" class="form-control" value="{{ p.code }}"></td>
+            <td><input name="name" class="form-control" value="{{ p.name }}"></td>
+            <td>{{ p.quantity }}</td>
+            <td><input name="location" class="form-control" value="{{ p.location }}"></td>
+            <td>
+              {% if current_user.role == 'admin' %}
+                <button class="btn btn-sm btn-success">💾</button>
+                <a href="{{ url_for('delete', id=p.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Xoá?')">🗑️</a>
+              {% endif %}
+              <form method="POST" action="{{ url_for('imp', id=p.id) }}" class="d-inline">
+                <input type="number" name="qty" min="1" class="form-control d-inline w-50" placeholder="Nhập">
+                <button class="btn btn-sm btn-info">📥</button>
+              </form>
+              <form method="POST" action="{{ url_for('exp', id=p.id) }}" class="d-inline">
+                <input type="number" name="qty" min="1" class="form-control d-inline w-50" placeholder="Xuất">
+                <button class="btn btn-sm btn-warning">📤</button>
+              </form>
+            </td>
+          </form>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
 
