@@ -15,7 +15,8 @@ class Product(db.Model):
     code = db.Column(db.String(50), unique=True)
     name = db.Column(db.String(100))
     quantity = db.Column(db.Integer, default=0)
-    location = db.Column(db.String(120), default='')
+    location = db.Column(db.String(120), default='')  # 👈 dòng này rất quan trọng
+
 
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
