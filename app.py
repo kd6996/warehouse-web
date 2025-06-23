@@ -27,14 +27,14 @@ with app.app_context():
         db.session.commit()
 
 
-@app.route('/')
+@app.route('/edit/<int:id>', methods=['POST'])
 @login_required
-def index():
-    q = request.args.get('q','')
-    prods = Product.query.filter(
-        (Product.code.contains(q)) | (Product.name.contains(q))
-    ).all()
-    return render_template('index.html', products=prods, q=q)
+def edit(id):
+    if current_user.role != 'admin':
+        flash("Bạn không có quyền chỉnh sửa sản phẩm.")
+        return redirect(url_for('index'))
+    ...
+
 
 @app.route('/add', methods=['POST'])
 @login_required
