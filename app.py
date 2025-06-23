@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash
 from models import db, User, Product, Transaction
 from auth import auth_bp
 from datetime import datetime, timedelta
+from sqlalchemy import inspect
 import os
 
 app = Flask(__name__)
@@ -23,11 +24,15 @@ def load_user(uid):
 
 with app.app_context():
     db.create_all()
-    try:
-        db.session.execute('ALTER TABLE product ADD COLUMN location VARCHAR(120);')
-        db.session.commit()
-    except Exception:
-        db.session.rollback()
+
+    inspector = inspect(db.engine)
+    columns = [col["name"] for col in inspector.get_columns("product")]
+    if "location" not in columns:
+        try:
+            db.session.execute('ALTER TABLE product ADD COLUMN location VARCHAR(120);')
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
 
     if not User.query.filter_by(username='admin').first():
         db.session.add(User(username='admin', password_hash=generate_password_hash('123456'), role='admin'))
@@ -123,4 +128,3 @@ def history_export():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
