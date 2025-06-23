@@ -22,8 +22,13 @@ login_manager.login_view = 'auth.login'
 def load_user(uid):
     return User.query.get(int(uid))
 
-@app.before_first_request
-def ensure_location_column():
+ensure_checked = False  # ⚠️ chỉ chạy 1 lần duy nhất
+
+@app.before_request
+def check_location_column_once():
+    global ensure_checked
+    if ensure_checked:
+        return
     with app.app_context():
         inspector = inspect(db.engine)
         cols = [col["name"] for col in inspector.get_columns("product")]
@@ -34,12 +39,12 @@ def ensure_location_column():
             except Exception:
                 db.session.rollback()
 
-        # tạo user mặc định nếu chưa có
         if not User.query.filter_by(username='admin').first():
             db.session.add(User(username='admin', password_hash=generate_password_hash('123456'), role='admin'))
         if not User.query.filter_by(username='staff').first():
             db.session.add(User(username='staff', password_hash=generate_password_hash('123456'), role='staff'))
         db.session.commit()
+        ensure_checked = True
 
 @app.route('/')
 @login_required
