@@ -25,6 +25,7 @@ def load_user(uid):
 with app.app_context():
     db.create_all()
 
+    # ✅ Kiểm tra nếu chưa có cột location thì tự thêm
     inspector = inspect(db.engine)
     columns = [col["name"] for col in inspector.get_columns("product")]
     if "location" not in columns:
@@ -34,6 +35,7 @@ with app.app_context():
         except Exception:
             db.session.rollback()
 
+    # ✅ Tạo user mặc định
     if not User.query.filter_by(username='admin').first():
         db.session.add(User(username='admin', password_hash=generate_password_hash('123456'), role='admin'))
     if not User.query.filter_by(username='staff').first():
@@ -71,7 +73,9 @@ def edit(id):
         flash("Bạn không có quyền chỉnh sửa sản phẩm.")
         return redirect(url_for('index'))
     p = Product.query.get_or_404(id)
-    p.code, p.name, p.location = request.form['code'], request.form['name'], request.form['location']
+    p.code = request.form['code']
+    p.name = request.form['name']
+    p.location = request.form['location']
     db.session.commit()
     return redirect(url_for('index'))
 
@@ -128,3 +132,4 @@ def history_export():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
