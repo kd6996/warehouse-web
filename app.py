@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash
-from flask_login import LoginManager, login_required
+from flask_login import LoginManager, login_required, current_user
 from werkzeug.security import generate_password_hash
 from models import db, User, Product, Transaction
 from auth import auth_bp
@@ -23,18 +23,19 @@ def load_user(uid):
 with app.app_context():
     db.create_all()
     if not User.query.filter_by(username='admin').first():
-        db.session.add(User(username='admin', password_hash=generate_password_hash('123456')))
-        db.session.commit()
+        db.session.add(User(username='admin', password_hash=generate_password_hash('123456'), role='admin'))
+    if not User.query.filter_by(username='staff').first():
+        db.session.add(User(username='staff', password_hash=generate_password_hash('123456'), role='staff'))
+    db.session.commit()
 
-
-@app.route('/edit/<int:id>', methods=['POST'])
+@app.route('/')
 @login_required
-def edit(id):
-    if current_user.role != 'admin':
-        flash("Bạn không có quyền chỉnh sửa sản phẩm.")
-        return redirect(url_for('index'))
-    ...
-
+def index():
+    q = request.args.get('q','')
+    prods = Product.query.filter(
+        (Product.code.contains(q)) | (Product.name.contains(q))
+    ).all()
+    return render_template('index.html', products=prods, q=q)
 
 @app.route('/add', methods=['POST'])
 @login_required
@@ -50,6 +51,10 @@ def add():
 @app.route('/edit/<int:id>', methods=['POST'])
 @login_required
 def edit(id):
+    if current_user.role != 'admin':
+        flash("Bạn không có quyền chỉnh sửa sản phẩm.")
+        return redirect(url_for('index'))
+
     p = Product.query.get_or_404(id)
     p.code, p.name = request.form['code'], request.form['name']
     db.session.commit()
@@ -58,6 +63,10 @@ def edit(id):
 @app.route('/delete/<int:id>')
 @login_required
 def delete(id):
+    if current_user.role != 'admin':
+        flash("Bạn không có quyền xoá sản phẩm.")
+        return redirect(url_for('index'))
+
     db.session.delete(Product.query.get_or_404(id))
     db.session.commit()
     return redirect(url_for('index'))
