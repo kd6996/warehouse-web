@@ -1,6 +1,6 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask_login import login_user, logout_user
 from werkzeug.security import check_password_hash
-from flask_login import login_user, logout_user, login_required
 from models import db, User
 
 auth_bp = Blueprint('auth', __name__)
@@ -12,11 +12,11 @@ def login():
         if u and check_password_hash(u.password_hash, request.form['password']):
             login_user(u)
             return redirect(url_for('index'))
-        flash('Sai tài khoản hoặc mật khẩu')
+        else:
+            flash('Sai tài khoản hoặc mật khẩu!')
     return render_template('login.html')
 
 @auth_bp.route('/logout')
-@login_required
 def logout():
     logout_user()
     return redirect(url_for('auth.login'))
