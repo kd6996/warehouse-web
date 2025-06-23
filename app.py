@@ -23,6 +23,12 @@ def load_user(uid):
 
 with app.app_context():
     db.create_all()
+    try:
+        db.session.execute('ALTER TABLE product ADD COLUMN location VARCHAR(120);')
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+
     if not User.query.filter_by(username='admin').first():
         db.session.add(User(username='admin', password_hash=generate_password_hash('123456'), role='admin'))
     if not User.query.filter_by(username='staff').first():
@@ -34,7 +40,9 @@ with app.app_context():
 def index():
     q = request.args.get('q', '')
     prods = Product.query.filter(
-        (Product.code.contains(q)) | (Product.name.contains(q)) | (Product.location.contains(q))
+        (Product.code.contains(q)) |
+        (Product.name.contains(q)) |
+        (Product.location.contains(q))
     ).all()
     return render_template('index.html', products=prods, q=q)
 
